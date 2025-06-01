@@ -3,7 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'react-hot-toast';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { 
+  PlusIcon, 
+  ChartBarIcon, 
+  EyeIcon, 
+  ArrowUpRightIcon,
+  LinkIcon,
+  CheckCircleIcon,
+  XCircleIcon
+} from '@heroicons/react/24/outline';
 import { FaInstagram, FaLinkedin, FaTwitter, FaYoutube, FaTiktok, FaFacebook, FaGithub, FaWhatsapp } from 'react-icons/fa';
 import { SiNotion, SiDiscord, SiSpotify } from 'react-icons/si';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -20,13 +28,25 @@ interface Link {
   order: number;
   isSocial: boolean;
   socialType?: string;
+  clicks?: number;
 }
 
+interface Analytics {
+  totalClicks: number;
+  totalViews: number;
+  clickRate: number;
+}
 
 export default function DashboardPage() {
   const { data: session } = useSession();
   const [links, setLinks] = useState<Link[]>([]);
+  const [analytics, setAnalytics] = useState<Analytics>({
+    totalClicks: 0,
+    totalViews: 0,
+    clickRate: 0,
+  });
   const [loading, setLoading] = useState(true);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newLink, setNewLink] = useState({
     title: '',
@@ -47,6 +67,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchLinks();
+    fetchAnalytics();
   }, []);
 
   async function fetchLinks() {
@@ -62,6 +83,23 @@ export default function DashboardPage() {
       toast.error('Failed to load links');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchAnalytics() {
+    setAnalyticsLoading(true);
+    try {
+      // Temporary mock data until the API is ready
+      setAnalytics({
+        totalClicks: 150,
+        totalViews: 300,
+        clickRate: 0.5,
+      });
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      toast.error('Failed to load analytics');
+    } finally {
+      setAnalyticsLoading(false);
     }
   }
 
@@ -204,51 +242,211 @@ export default function DashboardPage() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Gerenciar Links</h1>
-        <button
-          onClick={() => {
-            setEditingLink(null);
-            setIsModalOpen(true);
-          }}
-          className="cursor-pointer bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        >
-          Adicionar Novo Link
-        </button>
-      </div>
+  const socialLinks = links.filter(link => link.isSocial);
+  const regularLinks = links.filter(link => !link.isSocial);
+  const activeLinks = links.filter(link => link.active);
+  const inactiveLinks = links.filter(link => !link.active);
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={links.map((link) => link.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="space-y-4">
-            {links.map((link) => (
-              <DraggableLinkItem
-                key={link.id}
-                id={link.id}
-                title={link.title}
-                url={link.url}
-                active={link.active}
-                isSocial={link.isSocial}
-                socialType={link.socialType}
-                onDelete={handleDeleteLink}
-                onToggleActive={handleToggleActive}
-                onEdit={() => handleEditLink(link)}
-              />
-            ))}
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Section */}
+        <div className="mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Dashboard</h1>
+          <p className="text-lg text-gray-600">Manage your links and track performance</p>
+        </div>
+
+        {/* Quick Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {/* Total Links Card */}
+          <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 transition-all hover:shadow-md">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-indigo-50 rounded-lg">
+                <LinkIcon className="w-6 h-6 text-indigo-600" />
+              </div>
+              <span className="text-sm font-medium text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full">
+                Total Links
+              </span>
+            </div>
+            <div className="flex items-baseline">
+              <p className="text-2xl font-bold text-gray-900">{links.length}</p>
+              <span className="ml-2 text-sm text-gray-500">links</span>
+            </div>
+            <div className="mt-2 flex items-center space-x-3 text-sm text-gray-500">
+              <span>{socialLinks.length} social</span>
+              <span>•</span>
+              <span>{regularLinks.length} regular</span>
+            </div>
           </div>
-        </SortableContext>
-      </DndContext>
+
+          {/* Active Links Card */}
+          <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 transition-all hover:shadow-md">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-green-50 rounded-lg">
+                <CheckCircleIcon className="w-6 h-6 text-green-600" />
+              </div>
+              <span className="text-sm font-medium text-green-600 bg-green-50 px-2.5 py-0.5 rounded-full">
+                Active
+              </span>
+            </div>
+            <div className="flex items-baseline">
+              <p className="text-2xl font-bold text-gray-900">{activeLinks.length}</p>
+              <span className="ml-2 text-sm text-gray-500">active links</span>
+            </div>
+            <div className="mt-2 text-sm text-gray-500">
+              {((activeLinks.length / links.length) * 100).toFixed(0)}% of total links
+            </div>
+          </div>
+
+          {/* Inactive Links Card */}
+          <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 transition-all hover:shadow-md">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-red-50 rounded-lg">
+                <XCircleIcon className="w-6 h-6 text-red-600" />
+              </div>
+              <span className="text-sm font-medium text-red-600 bg-red-50 px-2.5 py-0.5 rounded-full">
+                Inactive
+              </span>
+            </div>
+            <div className="flex items-baseline">
+              <p className="text-2xl font-bold text-gray-900">{inactiveLinks.length}</p>
+              <span className="ml-2 text-sm text-gray-500">inactive links</span>
+            </div>
+            <div className="mt-2 text-sm text-gray-500">
+              {((inactiveLinks.length / links.length) * 100).toFixed(0)}% of total links
+            </div>
+          </div>
+
+          {/* Click Rate Card */}
+          <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 transition-all hover:shadow-md">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-purple-50 rounded-lg">
+                <ChartBarIcon className="w-6 h-6 text-purple-600" />
+              </div>
+              <span className="text-sm font-medium text-purple-600 bg-purple-50 px-2.5 py-0.5 rounded-full">
+                Performance
+              </span>
+            </div>
+            <div className="flex items-baseline">
+              <p className="text-2xl font-bold text-gray-900">
+                {analyticsLoading ? '-' : `${(analytics.clickRate * 100).toFixed(1)}%`}
+              </p>
+              <span className="ml-2 text-sm text-gray-500">click rate</span>
+            </div>
+            <div className="mt-2 text-sm text-gray-500">
+              {analyticsLoading ? '-' : `${analytics.totalClicks} clicks • ${analytics.totalViews} views`}
+            </div>
+          </div>
+        </div>
+
+        {/* Links Management Section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-2xl font-semibold text-gray-900">Manage Links</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Drag and drop to reorder your links
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setEditingLink(null);
+                setIsModalOpen(true);
+              }}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-sm hover:shadow"
+            >
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Add New Link
+            </button>
+          </div>
+
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            {/* Social Links Section */}
+            {socialLinks.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                  <span className="bg-blue-50 p-1.5 rounded-lg mr-2">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </span>
+                  Social Media Links
+                  <span className="ml-3 text-sm text-gray-500">({socialLinks.length})</span>
+                </h3>
+                <SortableContext
+                  items={socialLinks.map((link) => link.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {socialLinks.map((link) => (
+                      <DraggableLinkItem
+                        key={link.id}
+                        id={link.id}
+                        title={link.title}
+                        url={link.url}
+                        active={link.active}
+                        isSocial={link.isSocial}
+                        socialType={link.socialType}
+                        onDelete={handleDeleteLink}
+                        onToggleActive={handleToggleActive}
+                        onEdit={() => handleEditLink(link)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </div>
+            )}
+
+            {/* Regular Links Section */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                <span className="bg-purple-50 p-1.5 rounded-lg mr-2">
+                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                </span>
+                Regular Links
+                <span className="ml-3 text-sm text-gray-500">({regularLinks.length})</span>
+              </h3>
+              <SortableContext
+                items={regularLinks.map((link) => link.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {regularLinks.map((link) => (
+                    <DraggableLinkItem
+                      key={link.id}
+                      id={link.id}
+                      title={link.title}
+                      url={link.url}
+                      active={link.active}
+                      isSocial={link.isSocial}
+                      socialType={link.socialType}
+                      onDelete={handleDeleteLink}
+                      onToggleActive={handleToggleActive}
+                      onEdit={() => handleEditLink(link)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </div>
+          </DndContext>
+        </div>
+      </div>
 
       <EditLinkModal
         isOpen={isModalOpen}
