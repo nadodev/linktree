@@ -9,89 +9,90 @@ const updateSchema = z.object({
   url: z.string().url().optional(),
   active: z.boolean().optional(),
   order: z.number().int().nonnegative().optional(),
+  isSocial: z.boolean().optional(),
+  socialType: z.string().optional(),
 });
 
-export async function PATCH(
-  req: Request,
+export async function PUT(
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    console.log("session", session);
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    if (!session?.user) {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const link = await prisma.link.findUnique({
-      where: { id: params.id },
+    const data = await request.json();
+    const linkId = params.id;
+
+    // Verify link ownership
+    const existingLink = await prisma.link.findUnique({
+      where: {
+        id: linkId,
+        userId: session.user.id,
+      },
     });
 
-    if (!link) {
-      return NextResponse.json({ message: 'Link not found' }, { status: 404 });
+    if (!existingLink) {
+      return new NextResponse('Link not found or unauthorized', { status: 404 });
     }
 
-    if (link.userId !== session.user.id) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
-    const json = await req.json();
-    const body = updateSchema.parse(json);
-
+    // Update the link
     const updatedLink = await prisma.link.update({
-      where: { id: params.id },
-      data: body,
+      where: {
+        id: linkId,
+      },
+      data: {
+        title: data.title,
+        url: data.url,
+        active: data.active,
+        isSocial: data.isSocial,
+        socialType: data.socialType,
+      },
     });
 
     return NextResponse.json(updatedLink);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: error.errors[0].message },
-        { status: 400 }
-      );
-    }
-
     console.error('Error updating link:', error);
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    );
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
 
 export async function DELETE(
-  req: Request,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    if (!session?.user) {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const link = await prisma.link.findUnique({
-      where: { id: params.id },
+    const linkId = params.id;
+
+    // Verify link ownership
+    const existingLink = await prisma.link.findUnique({
+      where: {
+        id: linkId,
+        userId: session.user.id,
+      },
     });
 
-    if (!link) {
-      return NextResponse.json({ message: 'Link not found' }, { status: 404 });
+    if (!existingLink) {
+      return new NextResponse('Link not found or unauthorized', { status: 404 });
     }
 
-    if (link.userId !== session.user.id) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
+    // Delete the link
     await prisma.link.delete({
-      where: { id: params.id },
+      where: {
+        id: linkId,
+      },
     });
 
-    return NextResponse.json({ message: 'Link deleted' });
+    return new NextResponse('Link deleted successfully', { status: 200 });
   } catch (error) {
     console.error('Error deleting link:', error);
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    );
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 } 

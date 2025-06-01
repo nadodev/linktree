@@ -77,6 +77,12 @@ export default function DashboardLayout({
                   Links
                 </Link>
                 <Link
+                  href="/dashboard/settings"
+                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                >
+                  Settings
+                </Link>
+                <Link
                   href={`/link/${session?.user.username}`}
                   target="_blank"
                   rel="noopener noreferrer"

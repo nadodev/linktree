@@ -15,7 +15,7 @@ export async function POST(
       },
     });
 
-    return NextResponse.json(link);
+    return NextResponse.json({ clicks: link.clicks });
   } catch (error) {
     console.error('Error updating click count:', error);
     return NextResponse.json(

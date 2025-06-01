@@ -1,4 +1,6 @@
 import { prisma } from '../../lib/prisma';
+import LinkItem from '@/app/components/LinkItem';
+import SocialIcon from '@/app/components/SocialIcon';
 import { FaInstagram, FaLinkedin, FaTwitter, FaYoutube, FaTiktok, FaFacebook, FaGlobe, FaGithub, FaWhatsapp } from 'react-icons/fa';
 import { SiNotion, SiDiscord, SiSpotify } from 'react-icons/si';
 
@@ -8,35 +10,19 @@ interface PageProps {
   };
 }
 
-const getSocialIcon = (url: string) => {
-  try {
-    const domain = new URL(url).hostname.replace('www.', '').toLowerCase();
-    
-    if (domain.includes('instagram.com')) return <FaInstagram className="text-pink-500" />;
-    if (domain.includes('linkedin.com')) return <FaLinkedin className="text-blue-600" />;
-    if (domain.includes('twitter.com') || domain.includes('x.com')) return <FaTwitter className="text-blue-400" />;
-    if (domain.includes('youtube.com')) return <FaYoutube className="text-red-600" />;
-    if (domain.includes('tiktok.com')) return <FaTiktok className="text-black dark:text-white" />;
-    if (domain.includes('facebook.com')) return <FaFacebook className="text-blue-700" />;
-    if (domain.includes('github.com')) return <FaGithub className="text-gray-800 dark:text-white" />;
-    if (domain.includes('whatsapp.com')) return <FaWhatsapp className="text-green-500" />;
-    if (domain.includes('notion.so')) return <SiNotion className="text-black dark:text-white" />;
-    if (domain.includes('discord.com') || domain.includes('discord.gg')) return <SiDiscord className="text-indigo-600" />;
-    if (domain.includes('spotify.com')) return <SiSpotify className="text-green-500" />;
-    
-    return <FaGlobe className="text-gray-500" />;
-  } catch {
-    return <FaGlobe className="text-gray-500" />;
-  }
-};
-
-const getDomainName = (url: string) => {
-  try {
-    return new URL(url).hostname.replace('www.', '');
-  } catch {
-    return url;
-  }
-};
+const socialOptions = [
+  { name: 'Instagram', pattern: 'instagram.com', color: 'text-pink-500' },
+  { name: 'LinkedIn', pattern: 'linkedin.com', color: 'text-blue-600' },
+  { name: 'Twitter/X', pattern: 'twitter.com', color: 'text-blue-400' },
+  { name: 'YouTube', pattern: 'youtube.com', color: 'text-red-600' },
+  { name: 'TikTok', pattern: 'tiktok.com', color: 'text-black dark:text-white' },
+  { name: 'Facebook', pattern: 'facebook.com', color: 'text-blue-700' },
+  { name: 'GitHub', pattern: 'github.com', color: 'text-gray-800 dark:text-white' },
+  { name: 'WhatsApp', pattern: 'whatsapp.com', color: 'text-green-500' },
+  { name: 'Notion', pattern: 'notion.so', color: 'text-black dark:text-white' },
+  { name: 'Discord', pattern: 'discord.com', color: 'text-indigo-600' },
+  { name: 'Spotify', pattern: 'spotify.com', color: 'text-green-500' },
+];
 
 export default async function UserLinksPage({ params }: PageProps) {
   const user = await prisma.user.findUnique({
@@ -45,14 +31,19 @@ export default async function UserLinksPage({ params }: PageProps) {
       id: true,
       name: true,
       username: true,
+      image: true,
+      theme: true,
       links: {
+        where: { active: true },
+        orderBy: {
+          order: 'asc',
+        },
         select: {
           id: true,
           title: true,
           url: true,
-        },
-        orderBy: {
-          id: 'asc',
+          isSocial: true,
+          socialType: true,
         },
       },
     },
@@ -71,51 +62,69 @@ export default async function UserLinksPage({ params }: PageProps) {
     );
   }
 
+  const backgroundClass = user.theme || 'from-indigo-900 via-purple-900 to-pink-800';
+  const socialLinks = user.links.filter(link => link.isSocial);
+  const regularLinks = user.links.filter(link => !link.isSocial);
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 px-6 py-16 flex flex-col items-center">
-      <div className="text-center mb-12">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-r from-pink-500 to-violet-600 mb-6 mx-auto flex items-center justify-center shadow-xl">
-          <span className="text-3xl font-bold text-white">
-            {(user.name || user.username).charAt(0).toUpperCase()}
-          </span>
-        </div>
+    <main className={`min-h-screen bg-gradient-to-br ${backgroundClass} px-6 py-16 flex flex-col items-center`}>
+      <div className="text-center mb-8">
+        {user.image ? (
+          <img
+            src={user.image}
+            alt={user.name || user.username}
+            className="w-24 h-24 rounded-full mb-6 mx-auto object-cover border-2 border-white/20"
+          />
+        ) : (
+          <div className="w-24 h-24 rounded-full bg-gradient-to-r from-pink-500 to-violet-600 mb-6 mx-auto flex items-center justify-center shadow-xl">
+            <span className="text-3xl font-bold text-white">
+              {(user.name || user.username).charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
         <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)] tracking-tight">
           {user.name || user.username}
         </h1>
-        <p className="text-white/70">@{user.username}</p>
+        <p className="text-white/70 mb-6">@{user.username}</p>
+
+        {/* Social Media Icons */}
+        {socialLinks.length > 0 && (
+          <div className="flex justify-center gap-4 mb-8">
+            {socialLinks.map((link) => {
+              const social = socialOptions.find(s => s.name.toLowerCase() === link.socialType?.toLowerCase());
+              if (social) {
+                return (
+                  <SocialIcon
+                    key={link.id}
+                    id={link.id}
+                    url={link.url}
+                    type={link.socialType || ''}
+                    color={social.color}
+                    iconName={social.name}
+                  />
+                );
+              }
+              return null;
+            })}
+          </div>
+        )}
       </div>
 
       <div className="w-full max-w-md space-y-4">
-        {user.links.length === 0 ? (
+        {regularLinks.length === 0 ? (
           <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-8 text-center border border-white/10">
             <p className="text-white/70 italic">Nenhum link cadastrado ainda.</p>
           </div>
         ) : (
-          user.links.map((link) => (
-            <a
+          regularLinks.map((link) => (
+            <LinkItem
               key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center w-full rounded-xl bg-white/10 backdrop-blur-sm text-white text-lg font-medium py-4 px-6
-                         transition-all duration-300 hover:bg-white/20 hover:shadow-lg hover:shadow-purple-500/30 
-                         hover:-translate-y-1 active:translate-y-0 select-none border border-white/20 hover:border-white/30"
-            >
-              <div className="mr-4 text-2xl">
-                {getSocialIcon(link.url)}
-              </div>
-              <div className="text-left flex-1">
-                <div className="font-semibold">{link.title}</div>
-                <div className="text-sm text-white/60 font-normal">
-                  {getDomainName(link.url)}
-                </div>
-              </div>
-              <div className="text-white/30 ml-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </a>
+              id={link.id}
+              title={link.title}
+              url={link.url}
+              isSocial={link.isSocial}
+              socialType={link.socialType || undefined}
+            />
           ))
         )}
       </div>
