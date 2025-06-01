@@ -20,6 +20,10 @@ model User {
   password      String
   username      String    @unique
   image         String?
+  bio           String?   @db.Text
+  backgroundColor String? 
+  backgroundImage String?
+  pageViews     Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   links         Link[]
@@ -35,6 +39,7 @@ model Link {
   order       Int
   active      Boolean   @default(true)
   clicks      Int       @default(0)
+  icon        String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   userId      String

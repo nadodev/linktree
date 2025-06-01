@@ -5,9 +5,15 @@ import { prisma } from '@/app/lib/prisma';
 import { z } from 'zod';
 
 const updateSettingsSchema = z.object({
-  image: z.string().url().optional(),
-  theme: z.string().min(1).optional(),
-});
+  image: z.string().url().nullish(),
+  theme: z.string().nullish(),
+  bio: z.string().max(500).nullish(),
+  backgroundColor: z
+    .string()
+    .regex(/^(#[0-9A-Fa-f]{6}|rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(?:,\s*[\d.]+\s*)?\))$/)
+    .nullish(),
+  backgroundImage: z.string().url().nullish(),
+}).partial();
 
 export async function GET() {
   try {
@@ -22,8 +28,15 @@ export async function GET() {
       select: {
         image: true,
         theme: true,
+        bio: true,
+        backgroundColor: true,
+        backgroundImage: true,
       },
     });
+
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
 
     return NextResponse.json(user);
   } catch (error) {
@@ -44,29 +57,60 @@ export async function PATCH(req: Request) {
     }
 
     const json = await req.json();
-    const body = updateSettingsSchema.parse(json);
+    console.log('Received update request:', json);
 
-    const user = await prisma.user.update({
-      where: { id: session.user.id },
-      data: {
-        ...(body.image && { image: body.image }),
-        ...(body.theme && { theme: body.theme }),
-      },
-      select: {
-        image: true,
-        theme: true,
-      },
-    });
+    try {
+      // Transformar strings vazias em null
+      const sanitizedData = Object.entries(json).reduce((acc, [key, value]) => {
+        acc[key] = value === '' ? null : value;
+        return acc;
+      }, {} as Record<string, any>);
 
-    return NextResponse.json(user);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: error.errors[0].message },
-        { status: 400 }
-      );
+      console.log('Sanitized data:', sanitizedData);
+
+      const body = updateSettingsSchema.parse(sanitizedData);
+      console.log('Validated body:', body);
+
+      // Remover campos undefined
+      const updateData = Object.entries(body).reduce((acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as Record<string, any>);
+
+      console.log('Final update data:', updateData);
+
+      const user = await prisma.user.update({
+        where: { id: session.user.id },
+        data: updateData,
+        select: {
+          image: true,
+          theme: true,
+          bio: true,
+          backgroundColor: true,
+          backgroundImage: true,
+        },
+      });
+
+      return NextResponse.json(user);
+    } catch (validationError) {
+      console.error('Validation error:', validationError);
+      if (validationError instanceof z.ZodError) {
+        return NextResponse.json(
+          { 
+            message: 'Validation error', 
+            errors: validationError.errors.map(e => ({
+              path: e.path.join('.'),
+              message: e.message
+            }))
+          },
+          { status: 400 }
+        );
+      }
+      throw validationError;
     }
-
+  } catch (error) {
     console.error('Error updating user settings:', error);
     return NextResponse.json(
       { message: 'Internal server error' },

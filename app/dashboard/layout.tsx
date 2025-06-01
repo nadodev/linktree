@@ -8,6 +8,25 @@ import { signOut } from 'next-auth/react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { usePathname } from 'next/navigation';
+
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isActive = pathname === href;
+
+  return (
+    <Link
+      href={href}
+      className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${
+        isActive
+          ? 'border-indigo-500 text-gray-900'
+          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+      }`}
+    >
+      {children}
+    </Link>
+  );
+}
 
 export default function DashboardLayout({
   children,
@@ -16,7 +35,7 @@ export default function DashboardLayout({
 }) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [items, setItems] = useState<string[]>([]); // Estado para os itens ordenáveis
+  const [items, setItems] = useState<string[]>([]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -33,16 +52,13 @@ export default function DashboardLayout({
         const newIndex = items.indexOf(over?.id as string);
         return arrayMove(items, oldIndex, newIndex);
       });
-      
-      // Aqui você deve chamar sua API para atualizar a ordem no banco de dados
-      console.log('Nova ordem:', items);
     }
   };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Requer 8px de movimento para iniciar o arrasto
+        distance: 8,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -53,9 +69,13 @@ export default function DashboardLayout({
   if (status === 'loading') {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">Loading...</div>
+        <div className="text-center">Carregando...</div>
       </div>
     );
+  }
+
+  if (!session) {
+    return null;
   }
 
   return (
@@ -70,25 +90,19 @@ export default function DashboardLayout({
                 </Link>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center border-b-2 border-indigo-500 px-1 pt-1 text-sm font-medium text-gray-900"
-                >
+                <NavLink href="/dashboard">
                   Links
-                </Link>
+                </NavLink>
+                <NavLink href="/dashboard/settings">
+                  Configurações
+                </NavLink>
                 <Link
-                  href="/dashboard/settings"
-                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                >
-                  Settings
-                </Link>
-                <Link
-                  href={`/link/${session?.user.username}`}
+                  href={`/${session.user.username}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
                 >
-                  View Public Page
+                  Visualizar Página Pública
                 </Link>
               </div>
             </div>
@@ -98,7 +112,7 @@ export default function DashboardLayout({
                   onClick={() => signOut()}
                   className="relative inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
-                  Sign Out
+                  Sair
                 </button>
               </div>
             </div>

@@ -22,19 +22,6 @@ interface Link {
   socialType?: string;
 }
 
-const socialOptions = [
-  { name: 'Instagram', icon: FaInstagram, pattern: 'instagram.com', color: 'text-pink-500' },
-  { name: 'LinkedIn', icon: FaLinkedin, pattern: 'linkedin.com', color: 'text-blue-600' },
-  { name: 'Twitter/X', icon: FaTwitter, pattern: 'twitter.com', color: 'text-blue-400' },
-  { name: 'YouTube', icon: FaYoutube, pattern: 'youtube.com', color: 'text-red-600' },
-  { name: 'TikTok', icon: FaTiktok, pattern: 'tiktok.com', color: 'text-black' },
-  { name: 'Facebook', icon: FaFacebook, pattern: 'facebook.com', color: 'text-blue-700' },
-  { name: 'GitHub', icon: FaGithub, pattern: 'github.com', color: 'text-gray-900' },
-  { name: 'WhatsApp', icon: FaWhatsapp, pattern: 'whatsapp.com', color: 'text-green-500' },
-  { name: 'Notion', icon: SiNotion, pattern: 'notion.so', color: 'text-gray-900' },
-  { name: 'Discord', icon: SiDiscord, pattern: 'discord.com', color: 'text-indigo-600' },
-  { name: 'Spotify', icon: SiSpotify, pattern: 'spotify.com', color: 'text-green-500' },
-];
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -87,7 +74,6 @@ export default function DashboardPage() {
         const newIndex = items.findIndex((item) => item.id === over.id);
         const newItems = arrayMove(items, oldIndex, newIndex);
 
-        // Update order in the database
         fetch('/api/links/reorder', {
           method: 'PUT',
           headers: {
@@ -120,7 +106,6 @@ export default function DashboardPage() {
   }) => {
     try {
       if (editingLink) {
-        // Update existing link
         const response = await fetch(`/api/links/${editingLink.id}`, {
           method: 'PUT',
           headers: {
@@ -143,7 +128,6 @@ export default function DashboardPage() {
         );
         toast.success('Link updated successfully');
       } else {
-        // Create new link
         const response = await fetch('/api/links', {
           method: 'POST',
           headers: {
@@ -226,15 +210,15 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Manage Links</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Gerenciar Links</h1>
         <button
           onClick={() => {
             setEditingLink(null);
             setIsModalOpen(true);
           }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          className="cursor-pointer bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
-          Add New Link
+          Adicionar Novo Link
         </button>
       </div>
 

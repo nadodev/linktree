@@ -132,7 +132,7 @@ export default function DraggableLinkItem({
               : 'bg-red-100 text-red-800'
           }`}
         >
-          {active ? 'Active' : 'Inactive'}
+          {active ? 'Ativo' : 'Inativo'}
         </button>
 
         <button

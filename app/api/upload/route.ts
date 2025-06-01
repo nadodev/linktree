@@ -4,6 +4,11 @@ import { authOptions } from '@/app/lib/auth';
 import cloudinary from '@/app/lib/cloudinary';
 import { prisma } from '@/app/lib/prisma';
 
+type UpdatedUser = {
+  image?: string;
+  backgroundImage?: string;
+};
+
 export async function POST(request: Request) {
   try {
     // Verify environment variables first
@@ -27,6 +32,7 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    const type = formData.get('type') as string || 'profile'; // 'profile' or 'background'
 
     if (!file) {
       return NextResponse.json(
@@ -38,7 +44,8 @@ export async function POST(request: Request) {
     console.log('File received:', {
       type: file.type,
       size: file.size,
-      name: file.name
+      name: file.name,
+      uploadType: type
     });
 
     // Convert file to base64
@@ -49,19 +56,27 @@ export async function POST(request: Request) {
     try {
       // Upload to Cloudinary
       const result = await cloudinary.uploader.upload(base64Image, {
-        folder: 'link-app/avatars',
-        public_id: `user-${session.user.id}`,
+        folder: `link-app/${type === 'background' ? 'backgrounds' : 'avatars'}`,
+        public_id: `user-${session.user.id}-${type}`,
         overwrite: true,
       });
 
       // Update user directly using Prisma
+      const updateData = type === 'background' 
+        ? { backgroundImage: result.secure_url }
+        : { image: result.secure_url };
+
       const updatedUser = await prisma.user.update({
         where: { id: session.user.id },
-        data: { image: result.secure_url },
-        select: { image: true }
-      });
+        data: updateData,
+        select: type === 'background' 
+          ? { backgroundImage: true }
+          : { image: true }
+      }) as UpdatedUser;
 
-      return NextResponse.json({ url: updatedUser.image });
+      return NextResponse.json({ 
+        url: type === 'background' ? updatedUser.backgroundImage : updatedUser.image 
+      });
     } catch (uploadError: any) {
       console.error('Upload error:', uploadError);
       return NextResponse.json(

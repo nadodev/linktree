@@ -33,6 +33,9 @@ export default async function UserLinksPage({ params }: PageProps) {
       username: true,
       image: true,
       theme: true,
+      bio: true,
+      backgroundColor: true,
+      backgroundImage: true,
       links: {
         where: { active: true },
         orderBy: {
@@ -62,12 +65,27 @@ export default async function UserLinksPage({ params }: PageProps) {
     );
   }
 
-  const backgroundClass = user.theme || 'from-indigo-900 via-purple-900 to-pink-800';
+  // Define background style based on user preferences
+  const backgroundStyle = user.backgroundImage ? {
+    backgroundImage: `linear-gradient(to bottom, ${user.backgroundColor || 'rgba(0,0,0,0.5)'}, ${user.backgroundColor || 'rgba(0,0,0,0.5)'}), url(${user.backgroundImage})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  } : {
+    backgroundColor: user.backgroundColor || undefined,
+  };
+
+  const backgroundClass = !user.backgroundColor && !user.backgroundImage 
+    ? `bg-gradient-to-br ${user.theme || 'from-indigo-900 via-purple-900 to-pink-800'}`
+    : '';
+
   const socialLinks = user.links.filter(link => link.isSocial);
   const regularLinks = user.links.filter(link => !link.isSocial);
 
   return (
-    <main className={`min-h-screen bg-gradient-to-br ${backgroundClass} px-6 py-16 flex flex-col items-center`}>
+    <main 
+      className={`min-h-screen ${backgroundClass} px-6 py-16 flex flex-col items-center`}
+      style={backgroundStyle}
+    >
       <div className="text-center mb-8">
         {user.image ? (
           <img
@@ -85,7 +103,14 @@ export default async function UserLinksPage({ params }: PageProps) {
         <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)] tracking-tight">
           {user.name || user.username}
         </h1>
-        <p className="text-white/70 mb-6">@{user.username}</p>
+        <p className="text-white/70 mb-3">@{user.username}</p>
+        
+        {/* Bio */}
+        {user.bio && (
+          <p className="text-white/90 mb-6 max-w-md mx-auto text-lg">
+            {user.bio}
+          </p>
+        )}
 
         {/* Social Media Icons */}
         {socialLinks.length > 0 && (
