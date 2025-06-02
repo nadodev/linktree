@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
-export interface PageProps {
-  params: { [key: string]: string | string[] };
+export interface PageProps<T = { [key: string]: string }> {
+  params: Promise<T>;
   searchParams?: { [key: string]: string | string[] | undefined };
 }
 
@@ -11,9 +11,9 @@ export interface GenerateMetadataProps {
 }
 
 export interface UsernamePageProps {
-  params: {
+  params: Promise<{
     username: string;
-  };
+  }>;
   searchParams?: { [key: string]: string | string[] | undefined };
 }
 
@@ -26,4 +26,9 @@ export interface UsernameMetadataProps {
 
 export type UsernameParams = {
   username: string;
-}; 
+};
+
+export interface MetadataProps<T = { [key: string]: string }> {
+  params: Promise<T>;
+  searchParams?: { [key: string]: string | string[] | undefined };
+} 
