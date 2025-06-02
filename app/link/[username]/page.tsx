@@ -82,6 +82,5 @@ export default async function UserLinksPage(props: PageProps<UsernameParams>) {
       socialType: link.socialType || undefined
     }))
   };
-
   return <UserLinksClient user={user} />;
 }
