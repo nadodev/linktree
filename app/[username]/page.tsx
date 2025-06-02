@@ -8,9 +8,10 @@ type Props = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const username = props.params.username;
   const user = await prisma.user.findUnique({
-    where: { username: params.username },
+    where: { username },
     select: { name: true },
   });
 
@@ -25,9 +26,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ProfilePage({ params }: Props) {
+export default async function ProfilePage(props: Props) {
+  const username = props.params.username;
   const user = await prisma.user.findUnique({
-    where: { username: params.username },
+    where: { username },
     include: {
       links: {
         orderBy: { createdAt: 'desc' },
