@@ -8,12 +8,8 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
-import { useRouter } from 'next/router';
-
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  const router = useRouter();
-  const pathname = router.pathname;
-  const isActive = pathname === href;
+  const isActive = window.location.pathname === href;
 
   return (
     <Link
@@ -35,14 +31,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { data: session, status } = useSession();
-  const router = useRouter();
   const [items, setItems] = useState<string[]>([]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login');
+      window.location.href = '/login';
     }
-  }, [status, router]);
+  }, [status]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -110,7 +105,9 @@ export default function DashboardLayout({
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <button
-                  onClick={() => signOut()}
+                  onClick={() => {
+                    signOut({ callbackUrl: '/login' });
+                  }}
                   className="relative inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
                   Sair
