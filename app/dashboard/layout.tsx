@@ -1,17 +1,18 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { usePathname } from 'next/navigation';
+
+import { useRouter } from 'next/router';
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  const pathname = usePathname();
+  const router = useRouter();
+  const pathname = router.pathname;
   const isActive = pathname === href;
 
   return (
