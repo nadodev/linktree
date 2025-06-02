@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/app/lib/prisma';
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -48,14 +46,23 @@ export async function POST(req: Request) {
       });
 
       if (exists) {
+        const field = exists.email === body.email ? 'email' : 'username';
         return NextResponse.json(
-          { message: 'User with that email or username already exists' },
+          { message: `User with that ${field} already exists` },
           { status: 400 }
         );
       }
 
       // Hash password and create user
       const hashedPassword = await bcrypt.hash(body.password, 10);
+      
+      console.log('Creating user with data:', {
+        email: body.email,
+        username: body.username,
+        name: body.name,
+        // password omitted for security
+      });
+
       const user = await prisma.user.create({
         data: {
           email: body.email,
@@ -64,6 +71,8 @@ export async function POST(req: Request) {
           name: body.name,
         },
       });
+
+      console.log('User created successfully:', user.id);
 
       const { password: _, ...result } = user;
       return NextResponse.json(result);
@@ -79,24 +88,26 @@ export async function POST(req: Request) {
     }
   } catch (error: unknown) {
     // Log the full error for debugging
-    if (error instanceof Error) {
-      console.error('Registration error:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      });
+    console.error('Registration error:', {
+      name: error instanceof Error ? error.name : 'Unknown error',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
 
-      // Handle Prisma-specific errors
-      if (error instanceof PrismaClientKnownRequestError) {
-        return NextResponse.json(
-          { message: 'Database error. Please try again later.' },
-          { status: 500 }
-        );
-      }
+    // Handle Prisma-specific errors
+    if (error instanceof PrismaClientKnownRequestError) {
+      console.error('Prisma error code:', error.code);
+      return NextResponse.json(
+        { 
+          message: 'Database error. Please try again later.',
+          code: error.code 
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(
-      { message: 'Something went wrong! Please check the server logs.' },
+      { message: 'Something went wrong! Please try again later.' },
       { status: 500 }
     );
   }
