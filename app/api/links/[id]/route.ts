@@ -13,7 +13,7 @@ const updateSchema = z.object({
   socialType: z.string().optional(),
 });
 
-export const PUT = async (request: Request, { params }: { params: { id: string } }) => {
+export const PUT = async (request: Request, context: any) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -21,7 +21,7 @@ export const PUT = async (request: Request, { params }: { params: { id: string }
     }
 
     const data = await updateSchema.parseAsync(await request.json());
-    const linkId = params.id;
+    const linkId = context.params.id;
 
     // Verify link ownership
     const existingLink = await prisma.link.findUnique({
@@ -56,14 +56,14 @@ export const PUT = async (request: Request, { params }: { params: { id: string }
   }
 };
 
-export const DELETE = async (request: Request, { params }: { params: { id: string } }) => {
+export const DELETE = async (request: Request, context: any) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const linkId = params.id;
+    const linkId = context.params.id;
 
     // Verify link ownership
     const existingLink = await prisma.link.findUnique({
