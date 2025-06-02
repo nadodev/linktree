@@ -1,19 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 export async function POST(
   request: Request,
-  context: RouteParams
+  { params }: { params: { id: string } }
 ): Promise<NextResponse> {
   try {
     const link = await prisma.link.update({
-      where: { id: context.params.id },
+      where: { id: params.id },
       data: {
         clicks: {
           increment: 1,
