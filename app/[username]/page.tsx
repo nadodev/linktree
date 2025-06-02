@@ -3,13 +3,12 @@ import { prisma } from '@/app/lib/prisma';
 import { Metadata } from 'next';
 import { Links } from '@/app/components/Links';
 
-interface PageProps {
-  params: {
-    username: string;
-  };
-}
+type Props = {
+  params: { username: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const user = await prisma.user.findUnique({
     where: { username: params.username },
     select: { name: true },
@@ -26,7 +25,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function ProfilePage({ params }: PageProps) {
+export default async function ProfilePage({ params }: Props) {
   const user = await prisma.user.findUnique({
     where: { username: params.username },
     include: {
