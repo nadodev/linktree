@@ -4,7 +4,7 @@ import { prisma } from '@/app/lib/prisma';
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
-): Promise<NextResponse> {
+): Promise<NextResponse<{ clicks: number } | { message: string }>> {
   try {
     const link = await prisma.link.update({
       where: { id: params.id },
