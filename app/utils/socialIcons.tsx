@@ -1,4 +1,4 @@
-// utils/socialIcons.ts
+import React from 'react';
 import { FaInstagram, FaLinkedin, FaTwitter, FaYoutube, FaTiktok, FaFacebook, FaGlobe } from 'react-icons/fa';
 import { SiNotion, SiDiscord } from 'react-icons/si';
 
@@ -30,4 +30,4 @@ export const getSocialName = (url: string) => {
   if (domain.includes('discord.com') || domain.includes('discord.gg')) return 'Discord';
   
   return new URL(url).hostname.replace('www.', '');
-};
+}; 
