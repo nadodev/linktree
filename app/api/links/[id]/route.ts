@@ -13,17 +13,14 @@ const updateSchema = z.object({
   socialType: z.string().optional(),
 });
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export const PUT = async (request: Request, { params }: { params: { id: string } }) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const data = await request.json();
+    const data = await updateSchema.parseAsync(await request.json());
     const linkId = params.id;
 
     // Verify link ownership
@@ -57,12 +54,9 @@ export async function PUT(
     console.error('Error updating link:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-}
+};
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export const DELETE = async (request: Request, { params }: { params: { id: string } }) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -95,4 +89,4 @@ export async function DELETE(
     console.error('Error deleting link:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+};
