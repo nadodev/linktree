@@ -15,7 +15,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import DraggableLinkItem from '../components/DraggableLinkItem';
 import EditLinkModal from '../components/EditLinkModal';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router'; // Fixed import
 import { motion } from 'framer-motion';
 
 interface Link {
@@ -186,7 +186,7 @@ export default function DashboardPage() {
 
       setIsModalOpen(false);
       setEditingLink(null);
-      router.refresh();
+      window.location.reload();
     } catch (error) {
       console.error('Error saving link:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to save link');
@@ -205,7 +205,7 @@ export default function DashboardPage() {
 
       setLinks((prevLinks) => prevLinks.filter((link) => link.id !== id));
       toast.success('Link deleted successfully');
-      router.refresh();
+      window.location.reload();
     } catch (error) {
       console.error('Error deleting link:', error);
       toast.error('Failed to delete link');
@@ -232,7 +232,7 @@ export default function DashboardPage() {
         )
       );
       toast.success('Link status updated successfully');
-      router.refresh();
+      window.location.reload();
     } catch (error) {
       console.error('Error updating link status:', error);
       toast.error('Failed to update link status');
