@@ -6,15 +6,11 @@ import { toast } from 'react-hot-toast';
 import { 
   PlusIcon, 
   ChartBarIcon, 
-  EyeIcon, 
-  ArrowUpRightIcon,
   LinkIcon,
   CheckCircleIcon,
   XCircleIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline';
-import { FaInstagram, FaLinkedin, FaTwitter, FaYoutube, FaTiktok, FaFacebook, FaGithub, FaWhatsapp } from 'react-icons/fa';
-import { SiNotion, SiDiscord, SiSpotify } from 'react-icons/si';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import DraggableLinkItem from '../components/DraggableLinkItem';
