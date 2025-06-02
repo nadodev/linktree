@@ -14,22 +14,22 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  password      String
-  username      String    @unique
-  image         String?
-  bio           String?   @db.Text
-  backgroundColor String? 
+  id              String    @id @default(cuid())
+  name            String?
+  email           String    @unique
+  password        String
+  username        String    @unique
+  image           String?
+  bio             String?   @db.Text
+  backgroundColor String?
   backgroundImage String?
-  pageViews     Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  links         Link[]
-  theme         String    @default("default")
-  isVerified    Boolean   @default(false)
-  isPremium     Boolean   @default(false)
+  pageViews       Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  links           Link[]
+  theme           String    @default("default")
+  isVerified      Boolean   @default(false)
+  isPremium       Boolean   @default(false)
 }
 
 model Link {

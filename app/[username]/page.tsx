@@ -2,9 +2,11 @@ import { notFound } from 'next/dist/client/components/not-found';
 import { prisma } from '@/app/lib/prisma';
 import { Metadata } from 'next';
 import { Links } from '@/app/components/Links';
-import { UsernamePageProps } from '../types';
+import { UsernamePageProps, UsernameMetadataProps } from '../types';
 
-export async function generateMetadata({ params }: UsernamePageProps): Promise<Metadata> {
+export async function generateMetadata(
+  { params }: UsernameMetadataProps
+): Promise<Metadata> {
   const user = await prisma.user.findUnique({
     where: { username: params.username },
     select: { name: true },
@@ -21,7 +23,8 @@ export async function generateMetadata({ params }: UsernamePageProps): Promise<M
   };
 }
 
-export default async function ProfilePage({ params }: UsernamePageProps) {
+export default async function ProfilePage(props: UsernamePageProps) {
+  const { params } = props;
   const user = await prisma.user.findUnique({
     where: { username: params.username },
     include: {
